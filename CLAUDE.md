@@ -126,3 +126,8 @@ issue non vengono trovate da chi ha lo stesso problema.
 
 Conseguenza operativa: si ragiona in italiano e si scrive in inglese. È voluto,
 non è un'incoerenza da correggere.
+
+Sull'esistente scritto in italiano prima di questa regola: **si traduce man mano
+che lo si tocca.** Niente conversioni in blocco — se apri una issue per
+lavorarla, esce in inglese; se non la tocchi, resta com'è. Il debito si paga
+dove serve, non tutto insieme.
