@@ -8,20 +8,22 @@ is the modem, the app is the interface.
 Existing clients (APRSDroid and derivatives, APRS World, G7JJF) grew out of the
 position report: messaging is a secondary tab, with no threads, no readable
 delivery state, and no help at all for command services (APRS2SOTA, SMSGTE,
-ANSRVR, WHO-IS, WXBOT, APRSLink). On a board with no keyboard the phone is the
-only way to write a message, and today that route is awkward.
+ANSRVR, WHO-IS, WXBOT). On a board with no keyboard the phone is the only way to
+write a message, and today that route is awkward.
 
 ## 2. Goal
 
 A single web codebase that:
 
-- ships as a Capacitor **Android APK** — see §4.1 for why the PWA target was dropped;
+- ships as a Capacitor **Android APK** — see §4 for why the PWA target was dropped;
 - speaks KISS to **every CA2RXU firmware** (LoRa_APRS_Tracker on any supported
   board; whether LoRa_APRS_iGate exposes KISS over BT/TCP is unverified);
 - treats every exchange as a conversation, and every APRS service as a form.
 
-Non-goals for v1: map, iGate, direct APRS-IS, digipeating, full Winlink (only
-login/list/read, presented as threads).
+Non-goals: map, iGate, direct APRS-IS, digipeating, beaconing and position
+tracking, mail of any kind (Winlink included). Those are tracker or gateway
+functions. This is a messaging client, and the tracker already does its own job
+without us.
 
 ## 3. User
 
@@ -49,7 +51,7 @@ F23 keeps its value as backup but loses its original PWA↔APK migration rationa
 | Tracker mode | Transport | BLE service | Framing |
 |---|---|---|---|
 | `useBLE=true, useKISS=true` | BLE | `00000001-ba2a-46c9-ae49-01b0961f68bb`, TX(notify)=`…0003…`, RX(write)=`…0002…` | KISS, reassembled on FEND by the firmware |
-| `useBLE=true, useKISS=false` | BLE | NUS `6E400001-…`, TX(notify)=`6E400002-…`, RX(write)=`6E400003-…` | TNC2 text, **1 write = 1 packet**, no reassembly |
+| `useBLE=true, useKISS=false` | BLE | NUS `6E400001-…`, TX(notify)=`6E400002-…`, RX(write)=`6E400003-…` | TNC2 text, asymmetric: host→tracker **1 write = 1 packet**; tracker→host **one byte per BLE notification**, newline-terminated |
 | `useBLE=false` (classic ESP32 only) | BT Classic SPP | — | KISS or TNC2 |
 | USB serial | CP2102/CH340/USB-CDC (S3/C3) | — | KISS or TNC2 |
 
@@ -66,6 +68,19 @@ Decisions:
   `LoRa_Utils::sendNewPacket()` without touching the firmware's own output buffer
   or retry ladder, so msgId, retry and timeout belong entirely to the app. On RX,
   however, the firmware acts on its own — see §5.1.
+- **Transparent in content, not in cadence.** The firmware holds exactly one
+  pending host packet — a single `BLEToLoRaPacket` string plus a flag, overwritten
+  by every parsed frame and drained once per main loop, with a one-second blocking
+  display call in the path. A second write arriving during a transmit **discards
+  the first frame silently, with no error to the host.** The outbox must therefore
+  serialize BLE writes to one frame at a time with a pacing gap; `write(bytes)`
+  is not fire-and-forget.
+- **The shipped defaults reach nothing.** `data/tracker_conf.json` ships with
+  `bluetooth.active: false`, `useBLE: false`, `useKISS: false` — an untouched
+  tracker has Bluetooth off entirely. The operator must set `active`, `useBLE`
+  and `useKISS` true before the app can see anything. This does not weaken §5.2,
+  but it does mean "usable on stock firmware" starts after a configuration step
+  the app must explain rather than fail silently through.
 
 ### 5.1 What the firmware does without being asked
 
@@ -78,13 +93,14 @@ happens even with no phone connected, and none of it has a configuration flag:
 | Replies `"pong, 73!"` to `ping` | `msg_utils.cpp:452` |
 | Digipeats when `digipeaterActive` | `msg_utils.cpp:423-431` |
 | Keeps its own pending-ack state | `msg_utils.cpp:437-441` |
-| Deduplicates over a 15-second window | `check15SegBuffer()` |
-| Retries its own messages, 6 attempts, 30/60/120 s backoff | `msg_utils.cpp:321-343` |
+| Deduplicates over a 15-second window — its own handling only, never the BLE forward | `check15SegBuffer()`, called at `:421` |
+| Retries its own messages: 6 attempts at 0/30/60/120/120/120 s, then a 30 s expiry — about 8 minutes end to end | `msg_utils.cpp:338-364` |
 
 Paths above refer to `richonguzman/LoRa_APRS_Tracker`, not to this repository.
 
 Two consequences drive requirements below: the app must not auto-ack (F6), and
-the app's dedup window must account for a firmware that already deduplicates (F7).
+the app owns deduplication entirely (F7) — the firmware's 15-second window gates
+only its own handling and never reaches the host.
 
 ### 5.2 Stock firmware is the contract
 
@@ -111,7 +127,8 @@ works against a private fork is an app nobody else can use.
 ```
 ui/            components (threads, composer, service forms, contacts, settings)
 core/
-  aprs/        build/parse: message, ack, rej, position, telemetry, mic-e (decode only)
+  aprs/        build/parse: message, ack, rej; position decode only, and only
+               because F17 needs it to compute distance
   ax25/        UI frame encode/decode, callsign+SSID, path, H-bit
   kiss/        FEND/FESC/TFEND/TFESC framing, reassembly from chunks
   services/    templates + response parsers, one per service
@@ -150,8 +167,12 @@ number and is marked as such rather than renumbered.
   second ack on the air for every message received. The app detects the
   firmware's ack passively in the RX stream instead. If app-side control turns
   out to be needed, it requires an upstream firmware flag, not a local workaround.
-- **F7.** Deduplicate: same sender + msgId within N minutes. Size N knowing the
-  firmware already deduplicates over 15 seconds. The msgId parser must accept
+- **F7.** Deduplicate: same sender + msgId within N minutes. The firmware's own
+  15-second dedup does **not** help here: `check15SegBuffer()` is called inside
+  `checkReceivedMessage` and gates only the firmware's digipeat/ack/reply
+  decisions, while the BLE forward sits outside that block and is unconditional —
+  so the app receives every decoded duplicate. Size N against the peer retry
+  ladder instead (§5.1): roughly eight minutes. The msgId parser must accept
   **variable-length** msgIds — the firmware generates up to three digits, while
   the spec's `{MM}` reply-ack is two characters.
 - **F8.** Composer: **67-byte** counter, not 67 characters. The APRS limit is in
@@ -169,8 +190,12 @@ number and is marked as such rather than renumbered.
 - **F11. SMSGTE**: phone number + text; SMS replies mapped onto that number's thread.
 - **F12. ANSRVR**: join/leave/CQ group; group messages in a per-group thread.
 - **F13. WHO-IS**, **WXBOT/WXNOW**: quick queries.
-- **F14. APRSLink (Winlink)**: login (automatic challenge, as the firmware does),
-  list, read; mail presented as threads.
+- **F14.** ~~APRSLink (Winlink)~~ — **dropped**. Mail was never a requirement of
+  this project, and the firmware runs its own unguarded Winlink state machine on
+  any WLNK-1 traffic addressed to its callsign (`msg_utils.cpp:487-527`,
+  challenge branch guarded by the tautology `winlinkStatus >= 1 || winlinkStatus
+  <= 3`), so an app-driven session would contend with the firmware rather than
+  merely duplicate it. Nothing here is worth the collision.
 - **F15.** Services declared in JSON: name, destination, template with
   placeholders, response regex. Adding a service is adding a file. Response
   grammars are reverse-engineered and undocumented, so regexes are versioned
@@ -189,23 +214,33 @@ number and is marked as such rather than renumbered.
   the UI must not be designed around a column that may stay empty.
 - **F18.** Start a thread from a heard station with one tap.
 
-### 7.5 Beacon (minimal)
+### 7.5 Beacon
 
-- **F19.** Manual beacon using the phone's position or the tracker's GPS. The
-  tracker already beacons on its own; the app does not duplicate SmartBeacon.
+- **F19.** ~~Manual beacon~~ — **dropped**. Beaconing is a tracker function and
+  the tracker already does it. There is also no mechanism: stock firmware exposes
+  no host command channel, so the app could neither request a GPS fix nor trigger
+  a beacon, and the only tracker position reaching the phone is its own
+  autonomous beacon echo — itself gated on `useBLE`, so absent over USB and BT
+  Classic.
 
 ### 7.6 Platform
 
 - **F20.** ~~Installable PWA~~ — **dropped**, see §4.
 - **F21.** Capacitor APK with a foreground service: BLE stays alive with the
-  screen off, notification on inbound message. Requires `FOREGROUND_SERVICE` and
-  `WAKE_LOCK`. This is the only path to field use, not an enhancement.
+  screen off, notification on inbound message. This is the only path to field
+  use, not an enhancement. Permissions: `FOREGROUND_SERVICE`, plus
+  `FOREGROUND_SERVICE_CONNECTED_DEVICE` with `foregroundServiceType="connectedDevice"`
+  (API 34+, or `startForeground()` throws), `WAKE_LOCK`, and the runtime grants
+  `BLUETOOTH_SCAN` and `BLUETOOTH_CONNECT` (API 31+) and `POST_NOTIFICATIONS`
+  (API 33+). These are launch blockers, not polish.
 - **F22.** Everything works offline. No calls to the internet.
 - **F23.** Export/import (JSON) for backup and device-to-device transfer.
 
 ## 8. Non-functional
 
-- Reassembly must be robust against 20-byte BLE chunks and concatenated KISS frames.
+- Reassembly must be robust against 20-byte BLE chunks and concatenated KISS
+  frames, and — on the TNC2 receive path — against one-byte notifications
+  delimited by newline.
 - Unit tests on kiss/ax25/aprs against real packets captured from the tracker.
 - No runtime dependency beyond Capacitor and the BLE plugin.
 - **Latency.** The interval that matters is not the sub-200 ms hop from UI to BLE
@@ -228,9 +263,9 @@ number and is marked as such rather than renumbered.
 
 1. **M1 core**: kiss/ax25/aprs with tests; raw monitor over Web Serial on desktop.
 2. **M2 messages**: threads, ack/retry, contacts; native BLE on Android.
-3. **M3 services**: SOTA, SMSGTE, ANSRVR via JSON.
+3. **M3 services**: SOTA, SMSGTE, ANSRVR via JSON, plus F13's quick queries — the same declarative path.
 4. **M4 APK**: Capacitor, foreground service, notifications.
-5. **M5**: Winlink, TNC2 fallback, USB serial.
+5. **M5**: TNC2 fallback, USB serial.
 
 ## 11. UI references
 
