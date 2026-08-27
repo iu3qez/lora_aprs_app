@@ -156,16 +156,27 @@ number and is marked as such rather than renumbered.
 
 ### 7.2 Conversations
 
-**What an ack is worth.** APRS acknowledgement is asynchronous, non-contextual
-and best effort. It travels as an ordinary packet over the same lossy half-duplex
-channel as everything else — no session, no sequencing, no transport guarantee.
-A received ack is evidence that one path worked once. A missing ack is **not**
-evidence that the message failed: it may have been delivered and the ack lost,
-or the recipient may simply be out of range on the return leg.
+**The evidence rule.** This governs every state the app displays, here and
+everywhere else in this document. Cite it by name rather than re-arguing it.
 
-Every delivery state below is therefore a claim about evidence, never about
-certainty, and the interface must read that way. In particular, a timeout is
-rendered as "no confirmation", never as failure or non-delivery.
+APRS acknowledgement is asynchronous, non-contextual and best effort. It travels
+as an ordinary packet over the same lossy half-duplex channel as everything else
+— no session, no sequencing, no transport guarantee.
+
+- A received ack is evidence that one path worked, once.
+- A missing ack is evidence of **nothing**. The message may have arrived and the
+  ack been lost. The return leg may be worse than the outbound one — the two ends
+  rarely share antenna height, power or noise floor, so hearing someone is no
+  promise of being heard. Or propagation simply changed between one moment and
+  the next.
+- **Not receiving does not mean not transmitted.** Silence on RF is not negative
+  information; it is the absence of information.
+
+Therefore: every state below is a claim about evidence in hand, never about
+certainty. A timeout renders as "no confirmation" — never as failure, never as
+non-delivery. Where a state is inferred rather than observed (F6), the interface
+says so. No icon, colour or word may assert more evidence than the app actually
+holds.
 
 - **F4.** Thread per callsign-SSID, ordered by last activity. Threads and the
   heard list need a retention policy: after several activations the useful list
@@ -251,7 +262,9 @@ rendered as "no confirmation", never as failure or non-delivery.
   and RSSI/SNR **when available**. On stock firmware they are not: the firmware
   measures them and drops them before the BLE boundary. So the baseline
   requirement is a heard list that is genuinely useful without signal data — it
-  still answers who is on air, how recently, and lets F18 start a thread. Signal
+  still answers who is on air, how recently, and lets F18 start a thread. The
+  evidence rule (§7.2) applies here too: "not heard" means not heard, never
+  "not there". Signal
   quality is an enhancement that appears if an upstream patch lands (§5.2), and
   the UI must not be designed around a column that may stay empty.
 - **F18.** Start a thread from a heard station with one tap.
