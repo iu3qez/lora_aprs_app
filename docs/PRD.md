@@ -356,6 +356,10 @@ holds.
   delimited by newline.
 - Unit tests on kiss/ax25/aprs against real packets captured from the tracker.
 - No runtime dependency beyond Capacitor and the BLE plugin.
+- **No dev dependency either.** Tests run on the Node built-in runner
+  (`node:test` + `node:assert`), so a clone needs no install step to be verified.
+  The same constraint that keeps the app hackable — plain ES modules, no build —
+  applies to its test suite.
 - **Latency.** The interval that matters is not the sub-200 ms hop from UI to BLE
   write — the operator never perceives it. What they perceive is the retry ladder,
   which lasts minutes. The useful control there is being able to cancel or amend a
