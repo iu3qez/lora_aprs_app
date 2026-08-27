@@ -254,9 +254,20 @@ holds.
   <= 3`), so an app-driven session would contend with the firmware rather than
   merely duplicate it. Nothing here is worth the collision.
 - **F15.** Services declared in JSON: name, destination, template with
-  placeholders, response regex. Adding a service is adding a file. Response
-  grammars are reverse-engineered and undocumented, so regexes are versioned
-  defensively and a service may need several template variants.
+  placeholders, response regex. Adding a service is adding a file. A service may
+  need several template variants, and regexes are versioned defensively.
+
+  **Every definition carries its provenance**: who confirmed this grammar, how,
+  and on what date. These services have no source to read — they are remote bots
+  whose behaviour is only observable, and whose syntax changes without notice. A
+  definition confirmed by the service operator says so; one derived from observed
+  replies or third-party guides is marked `observed`, not `confirmed`, and its
+  failure handling assumes drift.
+
+  A grammar with no provenance is a grammar nobody can re-verify in a year. This
+  is the same discipline §5.2 applies to the firmware, with one inversion: there
+  is no source here, so asking the maintainer is the first step rather than the
+  fallback.
 
 ### 7.4 Contacts and stations
 
