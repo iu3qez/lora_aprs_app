@@ -156,17 +156,59 @@ number and is marked as such rather than renumbered.
 
 ### 7.2 Conversations
 
+**What an ack is worth.** APRS acknowledgement is asynchronous, non-contextual
+and best effort. It travels as an ordinary packet over the same lossy half-duplex
+channel as everything else — no session, no sequencing, no transport guarantee.
+A received ack is evidence that one path worked once. A missing ack is **not**
+evidence that the message failed: it may have been delivered and the ack lost,
+or the recipient may simply be out of range on the return leg.
+
+Every delivery state below is therefore a claim about evidence, never about
+certainty, and the interface must read that way. In particular, a timeout is
+rendered as "no confirmation", never as failure or non-delivery.
+
 - **F4.** Thread per callsign-SSID, ordered by last activity. Threads and the
   heard list need a retention policy: after several activations the useful list
   is buried under one-off chasers from unrelated summits.
 - **F5.** Every sent message shows msgId, attempts, ack/rej/timeout, and how it
   travelled (direct RF vs digipeated, read from the path H-bit). Hearing your own
-  packet come back digipeated is **not** delivery and must not be rendered as such.
-- **F6.** **The app does not transmit acks.** The firmware already auto-acks any
-  message addressed to its own callsign (§5.1), so an app-side ack would put a
-  second ack on the air for every message received. The app detects the
-  firmware's ack passively in the RX stream instead. If app-side control turns
-  out to be needed, it requires an upstream firmware flag, not a local workaround.
+  packet come back digipeated is **not** delivery and must not be rendered as such:
+  it is a distinct, weaker state — the packet reached the air and a digipeater
+  repeated it, while the recipient has confirmed nothing. Show it as such rather
+  than folding it into either neighbour.
+- **F6.** **The app neither transmits nor observes acks for inbound messages — it
+  infers them.** The firmware already auto-acks any message addressed to its own
+  callsign (§5.1), so an app-side ack would put a second ack on the air for every
+  message received.
+
+  The firmware's ack is also **not observable from the host**, for two independent
+  reasons: `BLE_Utils::sendToPhone()` is called only with received packets
+  (`LoRa_APRS_Tracker.cpp:221`, `:225`) and with the tracker's own beacons
+  (`station_utils.cpp:256`), never from the ack path; and the radio is a single
+  half-duplex SX12xx, which cannot hear its own transmission. No requirement may
+  be written against observing it.
+
+  The app therefore **infers** the ack deterministically. It holds the same
+  inbound frame the firmware acted on, and the firmware's gate conditions are
+  known from its source: message type 1, addressee equal to the tracker's
+  configured callsign, payload containing `{`. When all three hold, the firmware
+  will ack, released no earlier than 6 s after the inbound message
+  (`msg_utils.cpp:322`). The thread shows an inferred acknowledgement, never an
+  observed one.
+
+  Two limits, stated rather than hidden. The inference is only as good as the
+  firmware's gate, so a change to that gate upstream would make the app wrong
+  silently — one of the interfaces to watch under §5.2. And the app cannot
+  influence the ack's timing: the BLE transmit path does not update `lastTxTime`
+  (written only at `station_utils.cpp:266`, `msg_utils.cpp:331` and `:375`), so a
+  fast reply composed in the app goes out ahead of the firmware's ack and the
+  correspondent sees the two arrive out of order.
+
+  The alternative — running the app under an SSID different from the tracker's
+  beacon callsign, so the gate never fires and acking returns to the app — was
+  considered and rejected. It buys a different weak signal, not a stronger one
+  (see *What an ack is worth* above), and costs the station a second identity
+  correspondents would have to know about.
 - **F7.** Deduplicate: same sender + msgId within N minutes. The firmware's own
   15-second dedup does **not** help here: `check15SegBuffer()` is called inside
   `checkReceivedMessage` and gates only the firmware's digipeat/ack/reply
