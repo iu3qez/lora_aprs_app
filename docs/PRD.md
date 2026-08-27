@@ -94,6 +94,38 @@ Decisions:
   but it does mean "usable on stock firmware" starts after a configuration step
   the app must explain rather than fail silently through.
 
+### 5.0 The interop baseline is the APRSDroid convention
+
+The transport layer is modelled on a **serial byte stream**, and BLE is the
+adapter that has to emulate one. Not the other way round.
+
+That stream is the convention APRSDroid established and every LoRa APRS TNC
+implements. In this firmware it lives in the BT Classic path
+(`bluetooth_utils.cpp`), and it is the better-behaved half:
+
+- **Framing is detected, not configured.** `getData()` runs
+  `KISS_Utils::validateKISSFrame()` on each received buffer and sets `useKiss`
+  from the result; `sendToPhone()` then answers in the same framing the host used
+  — `encodeKISS()` when the host spoke KISS, a plain `println` of the TNC2 line
+  otherwise. The host does not have to be told which mode the tracker is in; it
+  establishes it by speaking.
+- **Whole frames, not fragments.** `SerialBT.print()` of the complete encoded
+  frame. None of the BLE path's one-notification-per-byte behaviour.
+- **NMEA travels the same channel.** Buffers beginning `$G` or `$B` are fed to
+  `gps.encode()` instead, so a host can supply position to the tracker. That is
+  part of the convention too, though F19 means this project does not use it.
+
+USB serial has the same shape. BLE is the outlier, with custom UUIDs, firmware-
+side reassembly on FEND, and the single-slot write buffer of §5. Writing
+`core/kiss` and the transport interface against stream semantics costs nothing
+extra and makes the app work with any TNC that follows the convention, rather
+than with one firmware.
+
+Recorded because it was got wrong once: there is **no `bluetoothType` field**.
+The tracker's Bluetooth configuration is exactly `active`, `deviceName`,
+`useBLE`, `useKISS`. Any three-mode `bluetoothType` (BLE/iPhone, Classic/Android,
+BLE/Android) described elsewhere is stale or belongs to a fork.
+
 ### 5.1 What the firmware does without being asked
 
 All of the following runs before the Bluetooth gate in the main loop, so it
@@ -146,9 +178,12 @@ core/
   services/    templates + response parsers, one per service
   outbox/      TX queue, msgId, retry with backoff, expiry
   store/       IndexedDB: threads, messages, contacts, heard, config
-transport/     one interface: open(), write(bytes), onData(cb), close()
-  cap-ble.js         @capacitor-community/bluetooth-le
-  cap-serial.js      USB serial plugin (community or custom)
+transport/     one interface, stream semantics (§5.0): open(), write(bytes),
+               onData(cb), close(). Adapters deliver whole frames upward and
+               serialize writes; per-transport quirks stay below this line.
+  cap-serial.js      USB serial plugin — the reference shape
+  cap-ble.js         @capacitor-community/bluetooth-le — emulates the stream:
+                     reassembly, one in-flight write, MTU-3 chunking
   web-serial.js      desktop, development harness only
 ```
 
