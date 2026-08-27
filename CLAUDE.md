@@ -73,3 +73,21 @@ Regole per le issue:
 
 Prima di aprirne una, controlla con `gh issue list` che non esista già.
 Se una cosa **è** stata chiusa in sessione, non aprire la issue: il commit basta.
+
+### Le cose piccole non meritano una PR
+
+Default per una modifica piccola e a basso rischio: **commit sul repo, merge in
+`main` se sei su un branch, push.** Niente branch di servizio, niente PR, niente
+review ceremony per un fix da tre righe o un aggiornamento di documentazione.
+
+Quindi:
+
+- Modifica piccola → commit diretto su `main` e push. Fine.
+- Se il lavoro è già partito su un branch ma si è rivelato piccolo → merge in
+  `main` (fast-forward quando possibile) e push, senza passare da una PR.
+- **La PR si apre solo quando serve davvero**: cambiamenti estesi o rischiosi,
+  lavoro che va rivisto o discusso prima di entrare, modifiche che toccano
+  l'architettura o rompono compatibilità.
+
+Non chiedere "apro una PR?" per roba banale: committa e dillo in una riga.
+Vale la proporzionalità della sezione sopra — la PR è overhead, non rito.
