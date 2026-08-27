@@ -99,3 +99,30 @@ passare da una PR.
 
 Nel dubbio, PR. Non chiedere "apro una PR?" per un refuso: committa e dillo in
 una riga.
+
+## Lingua
+
+**Fra me e te: italiano. Tutto ciò che finisce sotto gli occhi di altri: inglese.**
+
+In inglese, senza eccezioni:
+
+- issue — titoli, corpi, commenti
+- pull request — titoli, descrizioni, risposte alle review
+- messaggi di commit
+- commenti nel codice, nomi di simboli, docstring
+- README, `CLAUDE.md`, documentazione nel repo
+- qualsiasi thread upstream: PR e issue sul firmware CA2RXU, discussioni nella
+  community LoRa APRS
+
+In italiano:
+
+- la conversazione in chat, e basta
+
+Il motivo è pratico, non stilistico. Questo progetto vive in una community
+internazionale: il firmware è cileno, il concorrente più vicino è polacco, i
+radioamatori che potrebbero contribuire sono ovunque. Un repository scritto in
+italiano è un repository che nessuno legge, a cui nessuno manda patch, e le cui
+issue non vengono trovate da chi ha lo stesso problema.
+
+Conseguenza operativa: si ragiona in italiano e si scrive in inglese. È voluto,
+non è un'incoerenza da correggere.
