@@ -74,20 +74,28 @@ Regole per le issue:
 Prima di aprirne una, controlla con `gh issue list` che non esista già.
 Se una cosa **è** stata chiusa in sessione, non aprire la issue: il commit basta.
 
-### Le cose piccole non meritano una PR
+### Quando serve una PR e quando no
 
-Default per una modifica piccola e a basso rischio: **commit sul repo, merge in
-`main` se sei su un branch, push.** Niente branch di servizio, niente PR, niente
-review ceremony per un fix da tre righe o un aggiornamento di documentazione.
+**Vanno in PR** — branch dedicato, PR aperta, merge solo da lì:
 
-Quindi:
+- Nuove funzionalità.
+- Correzioni di bug sul codice.
+- Qualsiasi sviluppo che non si chiude in una sessione sola.
 
-- Modifica piccola → commit diretto su `main` e push. Fine.
-- Se il lavoro è già partito su un branch ma si è rivelato piccolo → merge in
-  `main` (fast-forward quando possibile) e push, senza passare da una PR.
-- **La PR si apre solo quando serve davvero**: cambiamenti estesi o rischiosi,
-  lavoro che va rivisto o discusso prima di entrare, modifiche che toccano
-  l'architettura o rompono compatibilità.
+Il branch è il contenitore del lavoro in corso: se la cosa attraversa più
+sessioni, deve esistere fuori dalla chat, e la PR è il posto dove sta il
+contesto. Vale anche se il diff finale è piccolo — a contare è la natura del
+lavoro, non il numero di righe.
 
-Non chiedere "apro una PR?" per roba banale: committa e dillo in una riga.
-Vale la proporzionalità della sezione sopra — la PR è overhead, non rito.
+**Vanno dritte in `main`** — commit e push, niente branch, niente PR:
+
+- Documentazione, `CLAUDE.md`, note, README.
+- Configurazione, metadati, file di progetto.
+- Refusi, rinomine banali, one-liner senza effetto sul comportamento.
+
+Se il lavoro è partito su un branch ma si è rivelato di questa seconda
+categoria, merge in `main` (fast-forward quando possibile) e push, senza
+passare da una PR.
+
+Nel dubbio, PR. Non chiedere "apro una PR?" per un refuso: committa e dillo in
+una riga.
