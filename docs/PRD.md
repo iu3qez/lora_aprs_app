@@ -28,8 +28,12 @@ without us.
 ## 3. User
 
 A radio amateur operating portable (SOTA activations, contests) with a LoRa
-tracker and an Android phone, usually with no network coverage. Secondarily: the
-same operator at the shack, on Linux, with the tracker on USB.
+tracker and an Android phone, usually with no network coverage. That is the whole
+user.
+
+There is no second, desktop user. The shack-on-Linux operator was a consequence
+of the PWA target and left with it (§4). USB serial in §10 serves an Android
+device connected by cable, not a desktop build.
 
 ## 4. Platform decision
 
@@ -311,16 +315,33 @@ holds.
   manager killing the process mid-retry leaves a thread stuck on a state that will
   never update. Retry state has to survive and reconcile, or the display is lying.
 - Channel behaviour: a messaging-first client transmits far more than a
-  beacon-only tracker on a shared channel. The BLE TX path in the firmware has no
-  listen-before-talk gate, so the app must implement its own.
+  beacon-only tracker on a shared channel, and the BLE TX path in the firmware
+  has no listen-before-talk gate. **True listen-before-talk is not implementable
+  from the app**: the host receives no channel-activity signal, learns of traffic
+  only after the firmware has fully decoded and forwarded a packet, and never
+  sees the firmware's own transmissions at all. What the app can do is pace
+  itself — a minimum interval between host-injected transmissions and a hold-off
+  after each received frame, mirroring the firmware's own guard
+  (`msg_utils.cpp:322`: no TX within 3 s of the last TX or 6 s of the last RX).
+  Real carrier sensing would need an upstream CAD change.
 
 ## 10. Milestones
 
-1. **M1 core**: kiss/ax25/aprs with tests; raw monitor over Web Serial on desktop.
-2. **M2 messages**: threads, ack/retry, contacts; native BLE on Android.
-3. **M3 services**: SOTA, SMSGTE, ANSRVR via JSON, plus F13's quick queries — the same declarative path.
-4. **M4 APK**: Capacitor, foreground service, notifications.
-5. **M5**: TNC2 fallback, USB serial.
+Every active requirement is placed. The APK moves early on its own merit: F21 is
+the only path to field use, so nothing can be tested where it matters until it
+exists.
+
+1. **M1 core** — F3. kiss/ax25/aprs with tests against captured packets; raw
+   monitor over Web Serial on the development harness.
+2. **M2 on air** — F1, F2, F21, F22. Native BLE on Android, Capacitor APK,
+   foreground service, notifications. First build that can go up a hill.
+3. **M3 conversations** — F4, F5, F6, F7, F8, F9. Threads, the evidence-based
+   delivery states, inferred ack, dedup, composer, path.
+4. **M4 services** — F10, F11, F12, F13, F15. The declarative JSON layer and the
+   services on top of it.
+5. **M5 stations and data** — F16, F17, F18, F23. Contacts, heard list with
+   retention, thread-from-heard, export/import.
+6. **M6 transports** — TNC2 receive fallback, USB serial.
 
 ## 11. UI references
 
