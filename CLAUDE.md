@@ -46,3 +46,30 @@ Dimensiona lo sforzo al problema, non al tuo repertorio di strumenti.
   pena sistemare, segnalalo in una riga — non farlo di tua iniziativa.
 - Vale anche in output: conciso di default, dettaglio solo se critico per la
   decisione.
+
+## Regole di ingaggio
+
+### Tutto ciò che non si chiude in sessione diventa una issue GitHub
+
+Se emerge qualcosa da risolvere — bug, decisione aperta, verifica da fare,
+debito, idea da valutare — e **non** viene chiuso prima della fine della
+sessione, apri una issue su `iu3qez/lora_aprs_app`. Non lasciarlo in un TODO nel
+codice, in un file di appunti o nella cronologia della chat: quella roba si
+perde.
+
+Vale anche per gli output dei workflow: un piano, una code review o una
+ideazione producono voci di follow-up → una issue ciascuna, non un elenco
+sepolto in un documento.
+
+Regole per le issue:
+
+- Titolo che dice il problema, non la categoria. "BLE MTU non negoziato, write
+  spezzate a 20 byte fisso" > "bug BLE".
+- Corpo: cosa serve, perché, e il contesto minimo per riprenderla fra tre mesi
+  senza rileggere la sessione. Se nasce da un documento, linkalo.
+- Etichetta se esistono etichette sensate; non inventare tassonomie nuove.
+- Niente firme, footer o riferimenti ad assistenza AI (vedi sezione
+  sull'attribuzione).
+
+Prima di aprirne una, controlla con `gh issue list` che non esista già.
+Se una cosa **è** stata chiusa in sessione, non aprire la issue: il commit basta.
