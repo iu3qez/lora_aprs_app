@@ -108,7 +108,7 @@ only its own handling and never reaches the host.
 
 ### 5.2 Stock firmware is the contract
 
-**The firmware as Ricardo ships it is the law.** The app targets unmodified
+**The firmware as upstream ships it is the law.** The app targets unmodified
 CA2RXU firmware and must be fully usable against it. Reading the source told us
 what that contract actually is; it did not make the contract ours to change.
 

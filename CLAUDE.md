@@ -100,6 +100,20 @@ passare da una PR.
 Nel dubbio, PR. Non chiedere "apro una PR?" per un refuso: committa e dillo in
 una riga.
 
+## Niente nomi di persone negli artefatti pubblici
+
+Nelle issue, PR, commit, documentazione e thread upstream **non si nominano
+persone**. Si citano identificatori di progetto: il repository
+(`richonguzman/LoRa_APRS_Tracker`), il nominativo quando è il nome del progetto
+o del firmware, il file e la riga. Mai il nome proprio di chi lo mantiene.
+
+Vale anche per terzi non coinvolti — autori di progetti concorrenti, chi ha
+aperto una issue upstream, chi gestisce un servizio APRS. In chat se ne parla
+liberamente; in ciò che resta scritto e indicizzato, no.
+
+Dove serve indicare la controparte, si scrive «upstream», «il manutentore»,
+«l'operatore del servizio».
+
 ## Lingua
 
 **Fra me e te: italiano. Tutto ciò che finisce sotto gli occhi di altri: inglese.**
