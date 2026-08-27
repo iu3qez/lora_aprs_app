@@ -16,14 +16,22 @@ write a message, and today that route is awkward.
 A single web codebase that:
 
 - ships as a Capacitor **Android APK** — see §4 for why the PWA target was dropped;
-- speaks KISS to **every CA2RXU firmware** (LoRa_APRS_Tracker on any supported
-  board; whether LoRa_APRS_iGate exposes KISS over BT/TCP is unverified);
+- speaks KISS to the tracker firmware (LoRa_APRS_Tracker) on any supported board;
 - treats every exchange as a conversation, and every APRS service as a form.
 
 Non-goals: map, iGate, direct APRS-IS, digipeating, beaconing and position
 tracking, mail of any kind (Winlink included). Those are tracker or gateway
 functions. This is a messaging client, and the tracker already does its own job
 without us.
+
+On the iGate specifically, since the question kept coming back: it **does** expose
+KISS — a TCP server on port 8001 (up to 4 clients, announced over mDNS as
+`igate-<callsign>.local`, service `_tnc._tcp`) and optionally over serial, both
+off by default. It has no Bluetooth at all. So it is out of scope not because it
+cannot be reached, but because reaching it needs a network and mains power, and
+this product is a phone on a summit. Noted for whoever asks again: its
+`tnc.acceptOwn` defaults to false, so it silently discards frames whose sender
+matches its own callsign.
 
 ## 3. User
 
@@ -321,7 +329,7 @@ holds.
 ## 9. Risks
 
 - BLE MTU: negotiate on connect, split writes at MTU-3, never assume 20 or 247.
-- iGate: if it does not expose KISS, it stays out of v1.
+
 - Android process death: the app owns the whole retry loop, so an OEM battery
   manager killing the process mid-retry leaves a thread stuck on a state that will
   never update. Retry state has to survive and reconcile, or the display is lying.
