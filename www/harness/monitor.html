@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KISS monitor</title>
+<style>
+  :root { --bg: #fff; --fg: #111; --muted: #666; --line: #ddd; --err: #b00020; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #111; --fg: #eee; --muted: #999; --line: #333; --err: #ff6b81; } }
+  body { background: var(--bg); color: var(--fg); font: 13px/1.4 ui-monospace, Menlo, monospace; margin: 16px; }
+  header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  #status { color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  td.hex { word-break: break-all; color: var(--muted); max-width: 40ch; }
+  td.err { color: var(--err); }
+</style>
+</head>
+<body>
+<header>
+  <button id="connect">Connect</button>
+  <button id="disconnect" disabled>Disconnect</button>
+  <button id="export" disabled>Export capture</button>
+  <span id="status">Receive only: this page never writes to the tracker.</span>
+</header>
+<table>
+  <thead><tr><th>t (s)</th><th>bytes</th><th>KISS (hex)</th><th>TNC2</th><th>type</th><th>decode</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<script type="module" src="monitor.js"></script>
+</body>
+</html>
