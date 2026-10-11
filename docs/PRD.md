@@ -40,8 +40,7 @@ tracker and an Android phone, usually with no network coverage. That is the whol
 user.
 
 There is no second, desktop user. The shack-on-Linux operator was a consequence
-of the PWA target and left with it (§4). USB serial in §10 serves an Android
-device connected by cable, not a desktop build.
+of the PWA target and left with it (§4).
 
 ## 4. Platform decision
 
@@ -58,17 +57,21 @@ a product surface and no feature may depend on it.
 Consequences: F20 is dropped. PWA storage-eviction concerns no longer apply.
 F23 keeps its value as backup but loses its original PWA↔APK migration rationale.
 
-## 5. Firmware constraints (verified against `main`, V2.4.3.2)
+## 5. Firmware constraints (verified against V2.4.3.2, re-checked on V4.0.1 `5bb2adc`)
 
 | Tracker mode | Transport | BLE service | Framing |
 |---|---|---|---|
 | `useBLE=true, useKISS=true` | BLE | `00000001-ba2a-46c9-ae49-01b0961f68bb`, TX(notify)=`…0003…`, RX(write)=`…0002…` | KISS, reassembled on FEND by the firmware |
 | `useBLE=true, useKISS=false` | BLE | NUS `6E400001-…`, TX(notify)=`6E400002-…`, RX(write)=`6E400003-…` | TNC2 text, asymmetric: host→tracker **1 write = 1 packet**; tracker→host **one byte per BLE notification**, newline-terminated |
 | `useBLE=false` (classic ESP32 only) | BT Classic SPP | — | KISS or TNC2 |
-| USB serial | CP2102/CH340/USB-CDC (S3/C3) | — | KISS or TNC2 |
+| USB serial | CP2102/CH340/USB-CDC (S3/C3) | — | **none**: log output only |
 
 Decisions:
 
+- **USB serial carries no host data.** Verified in V2.4.3.2 and V4.0.1: the only
+  `Serial.read` in the source is the GPS UART, and `KISS_Utils::` is called only
+  from `ble_utils.cpp` and `bluetooth_utils.cpp`. A cable gives the host the
+  firmware's log, nothing it can parse or send. Bluetooth is the only host path.
 - **KISS is primary.** TNC2 is supported for RX and debugging only; on TX it is
   limited to packets smaller than MTU-3.
 - The profile is detected from the advertised UUID. The user never picks one.
@@ -115,7 +118,7 @@ implements. In this firmware it lives in the BT Classic path
   `gps.encode()` instead, so a host can supply position to the tracker. That is
   part of the convention too, though F19 means this project does not use it.
 
-USB serial has the same shape. BLE is the outlier, with custom UUIDs, firmware-
+BLE is the outlier, with custom UUIDs, firmware-
 side reassembly on FEND, and the single-slot write buffer of §5. Writing
 `core/kiss` and the transport interface against stream semantics costs nothing
 extra and makes the app work with any TNC that follows the convention, rather
@@ -181,10 +184,9 @@ core/
 transport/     one interface, stream semantics (§5.0): open(), write(bytes),
                onData(cb), close(). Adapters deliver whole frames upward and
                serialize writes; per-transport quirks stay below this line.
-  cap-serial.js      USB serial plugin — the reference shape
   cap-ble.js         @capacitor-community/bluetooth-le — emulates the stream:
                      reassembly, one in-flight write, MTU-3 chunking
-  web-serial.js      desktop, development harness only
+  web-ble.js         desktop Chrome, development harness only, receive-only
 ```
 
 Vanilla JS with ES modules, no mandatory build step. Capacitor consumes the same
@@ -248,10 +250,14 @@ holds.
 
   The app therefore **infers** the ack deterministically. It holds the same
   inbound frame the firmware acted on, and the firmware's gate conditions are
-  known from its source: message type 1, addressee equal to the tracker's
-  configured callsign, payload containing `{`. When all three hold, the firmware
-  will ack, released no earlier than 6 s after the inbound message
-  (`msg_utils.cpp:322`). The thread shows an inferred acknowledgement, never an
+  known from its source (V4.0.1, `msg_utils.cpp:433-444`): message type 1,
+  addressee equal to the tracker's configured callsign, payload containing `{`,
+  and a non-empty ID after the last `{`. When all four hold, the firmware will
+  ack, released no earlier than 6 s after the inbound message
+  (`msg_utils.cpp:322`). The ID it acks is everything after the last `{`,
+  trimmed (`APRSPacketLib::generateAckMessage()`, APRSPacketLib 1.0.10), so a
+  reply-ack message `{AB}CD` is acked as `ackAB}CD`. The empty-ID check is new in
+  V4.0; V2.4.3.2 acked `{` with nothing after it as a bare `ack`. The thread shows an inferred acknowledgement, never an
   observed one.
 
   Two limits, stated rather than hidden. The inference is only as good as the
@@ -389,8 +395,9 @@ Every active requirement is placed. The APK moves early on its own merit: F21 is
 the only path to field use, so nothing can be tested where it matters until it
 exists.
 
-1. **M1 core** — F3. kiss/ax25/aprs with tests against captured packets; raw
-   monitor over Web Serial on the development harness.
+1. **M1 core** — F3. kiss/ax25/aprs with tests against the firmware's own codec
+   (compiled on the host, `tools/firmware-oracle`) and captured packets; raw
+   monitor over Web Bluetooth on the development harness, receive-only.
 2. **M2 on air** — F1, F2, F21, F22. Native BLE on Android, Capacitor APK,
    foreground service, notifications. First build that can go up a hill.
 3. **M3 conversations** — F4, F5, F6, F7, F8, F9. Threads, the evidence-based
@@ -399,7 +406,8 @@ exists.
    services on top of it.
 5. **M5 stations and data** — F16, F17, F18, F23. Contacts, heard list with
    retention, thread-from-heard, export/import.
-6. **M6 transports** — TNC2 receive fallback, USB serial.
+6. **M6 transports** — TNC2 receive fallback. USB serial is not a transport on
+   stock firmware (§5); it becomes one only if upstream adds a host data path.
 
 ## 11. UI references
 
