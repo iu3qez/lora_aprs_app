@@ -1,0 +1,150 @@
+{
+  "provenance": {
+    "repository": "richonguzman/LoRa_APRS_Tracker",
+    "commit": "5bb2adce2ebc7eb482a5ee841563bbf53b1feb7c",
+    "version": "4.0.1",
+    "source": "src/kiss_utils.cpp",
+    "generator": "tools/firmware-oracle"
+  },
+  "encode": [
+    {
+      "name": "beacon with path",
+      "tnc2": "49553351455a2d373e41504c5254312c57494445312d313a21343533372e31324e2f30313232342e3536453e74657374",
+      "kiss": "c00082a098a4a8626092aa66a28ab46eae92888a62406303f021343533372e31324e2f30313232342e3536453e74657374c0"
+    },
+    {
+      "name": "no path",
+      "tnc2": "49553351455a2d373e41504c5254313a3e737461747573",
+      "kiss": "c00082a098a4a8626092aa66a28ab46f03f03e737461747573c0"
+    },
+    {
+      "name": "message with msgId",
+      "tnc2": "49553358595a2d393e41504c5254312c57494445312d313a3a49553351455a2d37203a68656c6c6f7b313233",
+      "kiss": "c00082a098a4a8626092aa66b0b2b472ae92888a62406303f03a49553351455a2d37203a68656c6c6f7b313233c0"
+    },
+    {
+      "name": "ack",
+      "tnc2": "49553358595a2d393e41504c5254313a3a49553351455a2d37203a61636b313233",
+      "kiss": "c00082a098a4a8626092aa66b0b2b47303f03a49553351455a2d37203a61636b313233c0"
+    },
+    {
+      "name": "reply-ack message",
+      "tnc2": "49553358595a2d393e41504c5254313a3a49553351455a2d37203a68697b41427d4344",
+      "kiss": "c00082a098a4a8626092aa66b0b2b47303f03a49553351455a2d37203a68697b41427d4344c0"
+    },
+    {
+      "name": "digipeated, star on numbered alias",
+      "tnc2": "49553358595a2d393e41504c5254312c49523355464f2d31302a2c57494445322d313a3e737461747573",
+      "kiss": "c00082a098a4a8626092aa66b0b2b47292a466aa8c9ef4ae92888a64406303f03e737461747573c0"
+    },
+    {
+      "name": "digipeated, star on bare alias",
+      "tnc2": "49553358595a2d393e41504c5254312c57494445312a3a3e737461747573",
+      "kiss": "c00082a098a4a8626092aa66b0b2b472ae92888a6240e103f03e737461747573c0"
+    },
+    {
+      "name": "two stars",
+      "tnc2": "49553358595a2d393e41504c5254312c49523355464f2d31302a2c4952334142432d31312a3a3e737461747573",
+      "kiss": "c00082a098a4a8626092aa66b0b2b47292a466aa8c9ef492a466828486f703f03e737461747573c0"
+    },
+    {
+      "name": "eight digis",
+      "tnc2": "413e422c44312c44322c44332c44342c44352c44362c44372c44383a78",
+      "kiss": "c000844040404040608240404040406088624040404060886440404040608866404040406088684040404060886a4040404060886c4040404060886e40404040608870404040406103f078c0"
+    },
+    {
+      "name": "FEND and FESC in info",
+      "tnc2": "49553351455a3e41504c5254313a3e61c062db63",
+      "kiss": "c00082a098a4a8626092aa66a28ab46103f03e61dbdc62dbdd63c0"
+    },
+    {
+      "name": "UTF-8 info",
+      "tnc2": "49553358595a2d393e41504c5254313a3a49553351455a2d37203a7065726368c3a97b37",
+      "kiss": "c00082a098a4a8626092aa66b0b2b47303f03a49553351455a2d37203a7065726368c3a97b37c0"
+    },
+    {
+      "name": "callsign longer than 6",
+      "tnc2": "49553351455a41423e41504c5254313a3e78",
+      "kiss": "c00082a098a4a8626092aa66a28ab46103f03e78c0"
+    },
+    {
+      "name": "non-numeric SSID",
+      "tnc2": "49553351455a2d41423e41504c5254313a3e78",
+      "kiss": "c00082a098a4a8626092aa66a28ab46103f03e78c0"
+    },
+    {
+      "name": "SSID 15",
+      "tnc2": "49553351455a2d31353e41504c5254313a3e78",
+      "kiss": "c00082a098a4a8626092aa66a28ab47f03f03e78c0"
+    },
+    {
+      "name": "SSID 16 overflows",
+      "tnc2": "49553351455a2d31363e41504c5254313a3e78",
+      "kiss": "c00082a098a4a8626092aa66a28ab46103f03e78c0"
+    },
+    {
+      "name": "lowercase callsign",
+      "tnc2": "69753371657a3e41504c5254313a3e78",
+      "kiss": "c00082a098a4a86260d2ea66e2caf46103f03e78c0"
+    },
+    {
+      "name": "empty info field",
+      "tnc2": "49553351455a3e41504c5254313a",
+      "kiss": "c00082a098a4a8626092aa66a28ab46103f0c0"
+    },
+    {
+      "name": "not TNC2 at all",
+      "tnc2": "6761726261676520776974686f757420736570617261746f7273",
+      "kiss": "c000c0"
+    },
+    {
+      "name": "colon before >",
+      "tnc2": "413a423e43",
+      "kiss": "c000c0"
+    }
+  ],
+  "decode": [
+    {
+      "name": "data frame, port 0",
+      "kiss": "c00082a098a4a8626092aa66a28ab46eae92888a62406303f02174657374c0",
+      "dataFrame": true,
+      "tnc2": "49553351455a2d373e41504c5254312c57494445312d313a2174657374"
+    },
+    {
+      "name": "port 1 is not data",
+      "kiss": "c01082a098a4a8626092aa66a28ab46eae92888a62406303f02174657374c0",
+      "dataFrame": false,
+      "tnc2": "c01082a098a4a8626092aa66a28ab46eae92888a62406303f02174657374c0"
+    },
+    {
+      "name": "double leading FEND",
+      "kiss": "c0c00082a098a4a8626092aa66a28ab46eae92888a62406303f02174657374c0",
+      "dataFrame": false,
+      "tnc2": "c0c00082a098a4a8626092aa66a28ab46eae92888a62406303f02174657374c0"
+    },
+    {
+      "name": "C bits on dst and src are ignored",
+      "kiss": "c00082a098a4a862e092aa66a28ab4eeae92888a62406303f02174657374c0",
+      "dataFrame": true,
+      "tnc2": "49553351455a2d373e41504c5254312c57494445312d313a2174657374"
+    },
+    {
+      "name": "H bit on a digi becomes a star",
+      "kiss": "c00082a098a4a8626092aa66a28ab46eae92888a6240e303f02174657374c0",
+      "dataFrame": true,
+      "tnc2": "49553351455a2d373e41504c5254312c57494445312d312a3a2174657374"
+    },
+    {
+      "name": "escaped FEND and FESC in info",
+      "kiss": "c00082a098a4a8626092aa66a28ab46103f03e61dbdc62dbdd63c0",
+      "dataFrame": true,
+      "tnc2": "49553351455a3e41504c5254313a3e61c062db63"
+    },
+    {
+      "name": "no digis",
+      "kiss": "c00082a098a4a8626092aa66a28ab46103f03e78c0",
+      "dataFrame": true,
+      "tnc2": "49553351455a3e41504c5254313a3e78"
+    }
+  ]
+}
